@@ -2,7 +2,7 @@
 // @name         OCP (One China Policy) Cosmetic Replacement
 // @namespace    https://github.com/zappingsbrew/ocp-script
 // @version      1.0.0
-// @description  Aggressive One China Policy cosmetic enforcement: handles Taiwan/ROC, West Taiwan, SARs, coordinated phrases, English + Simplified + Traditional Chinese, emoji replacement, dynamic DOM, recursion-safe
+// @description  Aggressive One China Policy cosmetic enforcement: recursion-safe replacements, handles Taiwan/ROC, West Taiwan, SARs, coordinated phrases, English + Simplified + Traditional Chinese, emoji replacement, dynamic DOM
 // @author       Zappingsbrew & ChatGPT
 // @match        *://*/*
 // @grant        none
@@ -21,44 +21,54 @@
         return node.parentElement && (node.parentElement.isContentEditable || SKIP_TAGS.has(node.parentElement.tagName));
     }
 
+    // Safe replacement with exceptions
+    function safeReplace(text, regex, replacement, exceptions=[]){
+        return text.replace(regex, (match)=>{
+            for(const exc of exceptions){
+                if(match.includes(exc)) return match; // skip replacement
+            }
+            return replacement;
+        });
+    }
+
     function replaceText(text){
         let out = text;
 
         // -------------------------------
         // 1. Taiwan Province (most specific)
         // -------------------------------
-        out = out.replace(/\bTaiwan Province\b/gi, "Taiwan Province, People's Republic of China");
+        out = safeReplace(out, /\bTaiwan Province\b/gi, "Taiwan Province, People's Republic of China", ["Taiwan Province, People's Republic of China"]);
 
         // -------------------------------
-        // 2. Parenthetical atomic replacements
+        // 2. Parenthetical forms
         // -------------------------------
-        out = out.replace(/\bROC\s*\(\s*Taiwan\s*\)/gi, 'Taiwan, China');
-        out = out.replace(/\bTaiwan\s*\(\s*ROC\s*\)/gi, 'Taiwan, China');
-        out = out.replace(/\bRepublic\s+of\s+China\s*\(\s*Taiwan\s*\)/gi, 'Taiwan, China');
-        out = out.replace(/\bTaiwan\s*\(\s*Republic\s+of\s+China\s*\)/gi, 'Taiwan, China');
+        out = safeReplace(out, /\bROC\s*\(\s*Taiwan\s*\)/gi, 'Taiwan, China');
+        out = safeReplace(out, /\bTaiwan\s*\(\s*ROC\s*\)/gi, 'Taiwan, China');
+        out = safeReplace(out, /\bRepublic\s+of\s+China\s*\(\s*Taiwan\s*\)/gi, 'Taiwan, China');
+        out = safeReplace(out, /\bTaiwan\s*\(\s*Republic\s+of\s+China\s*\)/gi, 'Taiwan, China');
 
         // -------------------------------
         // 3. Anti-CCP / sarcastic terms
         // -------------------------------
-        out = out.replace(/\bWest Taiwan\b/gi, 'China');
+        out = safeReplace(out, /\bWest Taiwan\b/gi, 'China');
 
         // -------------------------------
         // 4. Full name replacements (guarded)
         // -------------------------------
-        out = out.replace(/(?<!People's\s)\bRepublic\s+of\s+China\b(?!\s*,\s*China)/gi, 'Taiwan, China');
+        out = safeReplace(out, /(?<!People's\s)\bRepublic\s+of\s+China\b(?!\s*,\s*China)/gi, 'Taiwan, China', ["People's Republic of China"]);
 
         // -------------------------------
-        // 5. Abbreviations (guarded)
+        // 5. Abbreviations (ROC)
         // -------------------------------
-        out = out.replace(/\bROC\b(?!\s*,\s*China)/gi, 'Taiwan, China');
+        out = safeReplace(out, /\bROC\b(?!\s*,\s*China)/gi, 'Taiwan, China', ["People's Republic of China"]);
 
         // -------------------------------
         // 6. Bare Taiwan (recursion-safe)
         // -------------------------------
-        out = out.replace(/\bTaiwan\b(?!\s*(,?\s*China| Province))/gi, 'Taiwan, China');
+        out = safeReplace(out, /\bTaiwan\b(?!\s*(,?\s*China| Province))/gi, 'Taiwan, China', ["Taiwan, China","Taiwan Province, People's Republic of China"]);
 
         // -------------------------------
-        // 7. Emoji replacement (visual only)
+        // 7. Emoji replacement
         // -------------------------------
         out = out.replace(/\u{1F1F9}\u{1F1FC}/gu, '🇨🇳');
 
@@ -96,4 +106,5 @@
 
     // Aggressive secondary pass every 2s for late-loaded content
     setInterval(()=>{ walk(document.body); }, 2000);
+
 })();
