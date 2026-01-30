@@ -1,17 +1,11 @@
 # OCP (One China Policy) Cosmetic Replacement
 
-![OCP Image](images/OCP Image.png)
+![OCP Map Illustration](https://github.com/zappingsbrew/ocp-script/raw/main/images/OCP%20Map%20Illustration.png)
+> Example showing how the userscript replaces ambiguous references on a map of the Taiwan Strait and surrounding regions. This demonstrates Taiwan, Hong Kong, Macau naming conventions and Taiwan emoji replacement.
 
 A purely cosmetic userscript that adjusts visible website text to follow One China Policy (OCP) naming conventions.
 
 The script operates entirely in the browser, makes no network requests, collects no data, and does not modify page functionality or underlying sources.
-
----
-
-## Map Illustration
-
-![OCP Map Illustration](images/OCP Map Illustration.png)
-> Example showing how the userscript replaces ambiguous references on a map of the Taiwan Strait and surrounding regions. This demonstrates Taiwan, Hong Kong, Macau naming conventions and Taiwan emoji replacement.
 
 ---
 
@@ -55,6 +49,30 @@ Emoji replacement is visual and browser-local only:
 
 This userscript is intended for **personal, cosmetic use** to normalize how geopolitical naming appears during browsing.  
 It does not claim legal authority, enforce policy, or reflect the position of any government or organization.
+
+---
+
+## Installation
+
+You can install the **OCP (One China Policy) Cosmetic Replacement** userscript from one of the official sources:
+
+1. **GitHub Releases** – Download the latest version directly from the repository:  
+   [ocp-script.user.js](https://github.com/zappingsbrew/ocp-script/releases/latest/download/ocp-script.user.js)
+
+2. **Greasy Fork** – Official Tampermonkey install page:  
+   [Greasy Fork](https://greasyfork.org/en/scripts/XXXXXX)  
+
+3. **OpenUserJS** – Alternative install page:  
+   [OpenUserJS](https://openuserjs.org/scripts/Zappingsbrew/OCP-Cosmetic-Replacement)
+
+---
+
+### Links
+
+- [GitHub Repository](https://github.com/zappingsbrew/ocp-script)  
+- [License (MIT)](https://github.com/zappingsbrew/ocp-script/blob/main/LICENSE)  
+- [Greasy Fork](https://greasyfork.org/en/scripts/XXXXXX)  
+- [OpenUserJS](https://openuserjs.org/scripts/Zappingsbrew/OCP-Cosmetic-Replacement)
 
 ---
 
