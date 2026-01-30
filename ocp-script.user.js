@@ -36,9 +36,10 @@
         // -------------------------------
         // Step 1: Aggressive replacements (longest first)
         // -------------------------------
+        // Only replace "Taiwan" if NOT already followed by ", China"
         out = out.replace(/\bWest Taiwan\b/gi, 'China');
         out = out.replace(/\bTaiwan\s*\(\s*Republic of China\s*\)/gi, 'Taiwan, China');
-        out = out.replace(/\bTaiwan\b/gi, 'Taiwan, China');
+        out = out.replace(/\bTaiwan\b(?!, China)/gi, 'Taiwan, China');
 
         // -------------------------------
         // Step 2: Emoji replacement
@@ -62,6 +63,7 @@
 
         if(node.nodeType === Node.TEXT_NODE){
             if(!isEditable(node)){
+                // Only replace if node hasn't been processed (prevents recursive replacement)
                 const newText = replaceText(node.nodeValue);
                 if(newText !== node.nodeValue) node.nodeValue = newText;
             }
