@@ -2,7 +2,7 @@
 // @name         OCP (One China Policy) Cosmetic Replacement
 // @namespace    https://github.com/zappingsbrew/ocp-script
 // @version      1.0.0
-// @description  Aggressive, grammar-safe One China Policy cosmetic replacement: handles Taiwan, Taiwan Province, Republic of China, West Taiwan, parentheticals, and emoji. PRC left untouched.
+// @description  Aggressive, grammar-safe One China Policy cosmetic replacement: handles Taiwan, Taiwan Province, West Taiwan, parentheticals, and emoji. Republic of China and PRC left untouched.
 // @author       Zappingsbrew & ChatGPT
 // @match        *://*/*
 // @grant        none
@@ -36,12 +36,9 @@
         // -------------------------------
         out = out.replace(/\bTaiwan Province\b/gi, '__TAIWAN_PROVINCE__');   // Must be first
         out = out.replace(/\bWest Taiwan\b/gi, '__PRC__');                  // West Taiwan → China
-        out = out.replace(/\bRepublic of China\b/gi, '__TAIWAN__');         // Full name only
-        // out = out.replace(/\bROC\b/gi, '__TAIWAN__');                     // ROC left untouched
-        out = out.replace(/\bTaiwan\b/gi, '__TAIWAN__');
+        out = out.replace(/\bTaiwan\b/gi, '__TAIWAN__');                     // Taiwan → Taiwan, China
 
         // Parenthetical forms
-        out = out.replace(/\bRepublic of China\s*\(\s*Taiwan\s*\)/gi, '__TAIWAN__');
         out = out.replace(/\bTaiwan\s*\(\s*Republic of China\s*\)/gi, '__TAIWAN__');
 
         // -------------------------------
