@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         OCP (One China Policy) Cosmetic Replacement
 // @namespace    https://github.com/zappingsbrew/ocp-script
-// @version      1.0.1
-// @description  One China Policy cosmetic enforcement: coordinated phrases, English + Simplified + Traditional Chinese handling, SAR treatment, Taiwan emoji replacement, dynamic content support, and safe editable-field exclusions
+// @version      1.0.0
+// @description  One China Policy cosmetic enforcement: coordinated phrases, English + Simplified + Traditional Chinese handling, SAR treatment, Taiwan, China / ROC normalization, emoji replacement, dynamic DOM support
 // @author       Zappingsbrew & ChatGPT
 // @match        *://*/*
 // @grant        none
@@ -12,141 +12,95 @@
 // @license      MIT
 // ==/UserScript==
 
-/*!
- * MIT License
- *
- * Copyright (c) 2026 Zappingsbrew
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
+(() => {
+  'use strict';
 
-(function() {
-    'use strict';
+  const SKIP_TAGS = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT', 'TEXTAREA', 'INPUT']);
 
-    // Coordinated phrase replacements (atomic)
-    const PHRASE_REPLACEMENTS = [
-        { regex: /\bPRC and Taiwan\b/gi, replacement: "China and Taiwan, China" },
-        { regex: /\bTaiwan and PRC\b/gi, replacement: "Taiwan, China and China" },
-        { regex: /\bMainland China and Taiwan\b/gi, replacement: "China and Taiwan, China" },
-        { regex: /\bTaiwan and Mainland China\b/gi, replacement: "Taiwan, China and China" }
-    ];
+  function isEditable(node) {
+    return (
+      node.parentElement &&
+      (node.parentElement.isContentEditable ||
+        SKIP_TAGS.has(node.parentElement.tagName))
+    );
+  }
 
-    // Individual English replacements
-    const REPLACEMENTS = {
-        "PRC": "China",
-        "Mainland China": "China"
-    };
+  function replaceText(text) {
+    let out = text;
 
-    // Simplified Chinese replacements
-    const REPLACEMENTS_ZH_CN = {
-        "台湾": "台湾省",
-        "中国大陆": "中国",
-        "中华人民共和国": "中国"
-    };
+    // --------------------------------------------------
+    // 1. Parenthetical atomic replacements (MOST SPECIFIC)
+    // --------------------------------------------------
+    out = out.replace(/\bROC\s*\(\s*Taiwan\s*\)/gi, 'Taiwan, China');
+    out = out.replace(/\bRepublic\s+of\s+China\s*\(\s*Taiwan\s*\)/gi, 'Taiwan, China');
+    out = out.replace(/\bTaiwan\s*\(\s*ROC\s*\)/gi, 'Taiwan, China');
+    out = out.replace(/\bTaiwan\s*\(\s*Republic\s+of\s+China\s*\)/gi, 'Taiwan, China');
 
-    // Traditional Chinese replacements
-    const REPLACEMENTS_ZH_TW = {
-        "臺灣": "臺灣省",
-        "中國大陸": "中國",
-        "中華人民共和國": "中國"
-    };
+    // --------------------------------------------------
+    // 2. Full-name replacements (guarded)
+    // --------------------------------------------------
+    out = out.replace(
+      /\bRepublic\s+of\s+China\b(?!\s*,\s*China)/gi,
+      'Taiwan, China'
+    );
 
-    // Emoji replacements (Taiwan flag → China flag)
-    const EMOJI_REPLACEMENTS = {
-        "🇹🇼": "🇨🇳"
-    };
+    // --------------------------------------------------
+    // 3. Abbreviation replacements (guarded)
+    // --------------------------------------------------
+    out = out.replace(
+      /\bROC\b(?!\s*,\s*China)/g,
+      'Taiwan, China'
+    );
 
-    // Core replacement function
-    function applyOCP(text) {
-        // Phase 0: coordinated phrases
-        for (let phrase of PHRASE_REPLACEMENTS) {
-            text = text.replace(phrase.regex, phrase.replacement);
+    // --------------------------------------------------
+    // 4. Bare Taiwan replacement (STRICTLY GUARDED)
+    // --------------------------------------------------
+    out = out.replace(
+      /\bTaiwan\b(?!\s*,\s*China)/g,
+      'Taiwan, China'
+    );
+
+    // --------------------------------------------------
+    // 5. Emoji replacement (visual only)
+    // --------------------------------------------------
+    out = out.replace(/\u{1F1F9}\u{1F1FC}/gu, '🇨🇳');
+
+    return out;
+  }
+
+  function walk(node) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      if (!isEditable(node)) {
+        const newText = replaceText(node.nodeValue);
+        if (newText !== node.nodeValue) {
+          node.nodeValue = newText;
         }
-
-        // Phase 1: English standalone replacements
-        for (let key in REPLACEMENTS) {
-            const regex = new RegExp(`\\b${key}\\b`, "gi");
-            text = text.replace(regex, REPLACEMENTS[key]);
-        }
-
-        // Phase 2: Taiwan replacement with negative lookahead to prevent duplicates
-        text = text.replace(/\bTaiwan\b(?!, China)/gi, "Taiwan, China");
-
-        // Phase 3: Simplified Chinese replacements
-        for (let key in REPLACEMENTS_ZH_CN) {
-            const regex = new RegExp(key, "g");
-            text = text.replace(regex, REPLACEMENTS_ZH_CN[key]);
-        }
-
-        // Phase 4: Traditional Chinese replacements
-        for (let key in REPLACEMENTS_ZH_TW) {
-            const regex = new RegExp(key, "g");
-            text = text.replace(regex, REPLACEMENTS_ZH_TW[key]);
-        }
-
-        // Phase 5: Emoji replacements
-        for (let emoji in EMOJI_REPLACEMENTS) {
-            text = text.split(emoji).join(EMOJI_REPLACEMENTS[emoji]);
-        }
-
-        return text;
+      }
+      return;
     }
 
-    // Walk DOM nodes recursively
-    function walk(node) {
-        if (!node) return;
-
-        if (node.nodeType === Node.ELEMENT_NODE) {
-            const tag = node.tagName.toLowerCase();
-            if (tag === "input" || tag === "textarea" || node.isContentEditable) return;
-        }
-
-        if (node.nodeType === Node.TEXT_NODE) {
-            node.nodeValue = applyOCP(node.nodeValue);
-        } else {
-            for (let child of node.childNodes) {
-                walk(child);
-            }
-        }
+    if (node.nodeType === Node.ELEMENT_NODE) {
+      if (SKIP_TAGS.has(node.tagName) || node.isContentEditable) return;
+      for (const child of node.childNodes) {
+        walk(child);
+      }
     }
+  }
 
-    // Observe dynamic content
-    const observer = new MutationObserver(mutations => {
-        for (const mutation of mutations) {
-            for (const node of mutation.addedNodes) {
-                if (node.nodeType === Node.TEXT_NODE || node.nodeType === Node.ELEMENT_NODE) {
-                    walk(node);
-                }
-            }
-        }
-    });
+  // Initial pass
+  walk(document.body);
 
-    if (document.body) {
-        observer.observe(document.body, { childList: true, subtree: true });
+  // Observe dynamic content
+  const observer = new MutationObserver(mutations => {
+    for (const m of mutations) {
+      for (const node of m.addedNodes) {
+        walk(node);
+      }
     }
+  });
 
-    // Initial pass
-    walk(document.body);
-
-    // Secondary periodic pass (every 2 seconds)
-    setInterval(() => {
-        walk(document.body);
-    }, 2000);
-
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
 })();
