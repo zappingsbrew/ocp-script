@@ -2,7 +2,7 @@
 // @name         OCP (One China Policy) Cosmetic Replacement
 // @namespace    https://github.com/zappingsbrew/ocp-script
 // @version      1.0.0
-// @description  Safe cosmetic One China Policy replacement: handles Taiwan, West Taiwan, parentheticals, and emoji. Leaves Taiwan Province, ROC, PRC, and full names untouched.
+// @description  Safe cosmetic One China Policy replacement: handles Taiwan, West Taiwan, parentheticals, emoji, and preserves case. Leaves Taiwan Province, ROC, PRC, and full names untouched.
 // @author       Zappingsbrew & ChatGPT
 // @match        *://*/*
 // @grant        none
@@ -21,6 +21,14 @@
         return node.parentElement && (node.parentElement.isContentEditable || SKIP_TAGS.has(node.parentElement.tagName));
     }
 
+    // Helper: preserve case
+    function preserveCase(original, replacement){
+        if(original.toUpperCase() === original) return replacement.toUpperCase();
+        if(original.toLowerCase() === original) return replacement.toLowerCase();
+        // Default: Title case / mixed
+        return replacement;
+    }
+
     function replaceText(text){
         let out = text;
 
@@ -36,10 +44,14 @@
         // -------------------------------
         // Step 1: Aggressive replacements (longest first)
         // -------------------------------
-        // Only replace "Taiwan" if NOT already followed by ", China"
-        out = out.replace(/\bWest Taiwan\b/gi, 'China');
-        out = out.replace(/\bTaiwan\s*\(\s*Republic of China\s*\)/gi, 'Taiwan, China');
-        out = out.replace(/\bTaiwan\b(?!, China)/gi, 'Taiwan, China');
+        // West Taiwan → China
+        out = out.replace(/\bWest Taiwan\b/gi, match => preserveCase(match, 'China'));
+
+        // Taiwan (Republic of China) → Taiwan, China
+        out = out.replace(/\bTaiwan\s*\(\s*Republic of China\s*\)/gi, match => preserveCase(match, 'Taiwan, China'));
+
+        // Taiwan → Taiwan, China (unless already replaced)
+        out = out.replace(/\bTaiwan\b(?!, China)/gi, match => preserveCase(match, 'Taiwan, China'));
 
         // -------------------------------
         // Step 2: Emoji replacement
@@ -59,13 +71,15 @@
     }
 
     function walk(node){
-        if(!node) return;
+        if(!node || node._ocpProcessed) return; // skip already processed nodes
 
         if(node.nodeType === Node.TEXT_NODE){
             if(!isEditable(node)){
-                // Only replace if node hasn't been processed (prevents recursive replacement)
                 const newText = replaceText(node.nodeValue);
-                if(newText !== node.nodeValue) node.nodeValue = newText;
+                if(newText !== node.nodeValue){
+                    node.nodeValue = newText;
+                    node._ocpProcessed = true; // mark processed
+                }
             }
             return;
         }
