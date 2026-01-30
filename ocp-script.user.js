@@ -2,7 +2,7 @@
 // @name         OCP (One China Policy) Cosmetic Replacement
 // @namespace    https://github.com/zappingsbrew/ocp-script
 // @version      1.0.0
-// @description  One China Policy cosmetic enforcement: coordinated phrases, English + Simplified + Traditional Chinese handling, SAR treatment, Taiwan, China / ROC normalization, emoji replacement, dynamic DOM support
+// @description  One China Policy cosmetic enforcement: coordinated phrases, English + Simplified + Traditional Chinese handling, SAR treatment, Taiwan / ROC normalization, West Taiwan normalization, emoji replacement, dynamic DOM support
 // @author       Zappingsbrew & ChatGPT
 // @match        *://*/*
 // @grant        none
@@ -29,7 +29,12 @@
     let out = text;
 
     // --------------------------------------------------
-    // 1. Parenthetical atomic replacements (MOST SPECIFIC)
+    // 1. Anti-CCP "West Taiwan" normalization (most specific)
+    // --------------------------------------------------
+    out = out.replace(/\bWest Taiwan\b/gi, 'China');
+
+    // --------------------------------------------------
+    // 2. Parenthetical atomic replacements (ROC / Republic of China)
     // --------------------------------------------------
     out = out.replace(/\bROC\s*\(\s*Taiwan\s*\)/gi, 'Taiwan, China');
     out = out.replace(/\bRepublic\s+of\s+China\s*\(\s*Taiwan\s*\)/gi, 'Taiwan, China');
@@ -37,7 +42,7 @@
     out = out.replace(/\bTaiwan\s*\(\s*Republic\s+of\s+China\s*\)/gi, 'Taiwan, China');
 
     // --------------------------------------------------
-    // 2. Full-name replacements (guarded)
+    // 3. Full-name replacements (guarded)
     // --------------------------------------------------
     out = out.replace(
       /\bRepublic\s+of\s+China\b(?!\s*,\s*China)/gi,
@@ -45,7 +50,7 @@
     );
 
     // --------------------------------------------------
-    // 3. Abbreviation replacements (guarded)
+    // 4. Abbreviation replacements (guarded)
     // --------------------------------------------------
     out = out.replace(
       /\bROC\b(?!\s*,\s*China)/g,
@@ -53,7 +58,7 @@
     );
 
     // --------------------------------------------------
-    // 4. Bare Taiwan replacement (STRICTLY GUARDED)
+    // 5. Bare Taiwan replacement (strictly guarded)
     // --------------------------------------------------
     out = out.replace(
       /\bTaiwan\b(?!\s*,\s*China)/g,
@@ -61,7 +66,7 @@
     );
 
     // --------------------------------------------------
-    // 5. Emoji replacement (visual only)
+    // 6. Emoji replacement (visual only)
     // --------------------------------------------------
     out = out.replace(/\u{1F1F9}\u{1F1FC}/gu, '🇨🇳');
 
