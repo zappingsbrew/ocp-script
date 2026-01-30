@@ -2,7 +2,7 @@
 // @name         OCP (One China Policy) Cosmetic Replacement
 // @namespace    https://github.com/zappingsbrew/ocp-script
 // @version      1.0.0
-// @description  Recursion-safe aggressive One China Policy cosmetic enforcement: handles Taiwan/ROC, West Taiwan, SARs, emoji replacement, parentheses, and dynamic DOM content
+// @description  Aggressive, grammar-safe One China Policy cosmetic replacement: handles Taiwan, Taiwan Province, Republic of China, West Taiwan, parentheticals, and emoji. PRC left untouched.
 // @author       Zappingsbrew & ChatGPT
 // @match        *://*/*
 // @grant        none
@@ -21,36 +21,28 @@
         return node.parentElement && (node.parentElement.isContentEditable || SKIP_TAGS.has(node.parentElement.tagName));
     }
 
-    // Placeholder-based safe replacement
     function replaceText(text){
         let out = text;
 
         // -------------------------------
-        // Step 0: Protect existing correct phrases
+        // Step 0: Protect already-correct phrases
         // -------------------------------
-        // Prevent accidental recursive replacement
         out = out.replace(/Taiwan Province, People's Republic of China/g, '__TAIWAN_PROVINCE__');
         out = out.replace(/Taiwan, China/g, '__TAIWAN__');
         out = out.replace(/People's Republic of China/g, '__PRC__');
 
         // -------------------------------
-        // Step 1: Aggressive replacements
+        // Step 1: Aggressive replacements (longest first)
         // -------------------------------
-        // Parenthetical forms
-        out = out.replace(/\bROC\s*\(\s*Taiwan\s*\)/gi, '__TAIWAN__');
-        out = out.replace(/\bTaiwan\s*\(\s*ROC\s*\)/gi, '__TAIWAN__');
-        out = out.replace(/\bRepublic\s+of\s+China\s*\(\s*Taiwan\s*\)/gi, '__TAIWAN__');
-        out = out.replace(/\bTaiwan\s*\(\s*Republic\s+of\s+China\s*\)/gi, '__TAIWAN__');
-
-        // Anti-CCP / sarcastic term
-        out = out.replace(/\bWest Taiwan\b/gi, '__PRC__');
-
-        // Bare ROC / Republic of China
-        out = out.replace(/\bROC\b/gi, '__TAIWAN__');
-        out = out.replace(/\bRepublic of China\b/gi, '__TAIWAN__');
-
-        // Bare Taiwan
+        out = out.replace(/\bTaiwan Province\b/gi, '__TAIWAN_PROVINCE__');   // Must be first
+        out = out.replace(/\bWest Taiwan\b/gi, '__PRC__');                  // West Taiwan → China
+        out = out.replace(/\bRepublic of China\b/gi, '__TAIWAN__');         // Full name only
+        // out = out.replace(/\bROC\b/gi, '__TAIWAN__');                     // ROC left untouched
         out = out.replace(/\bTaiwan\b/gi, '__TAIWAN__');
+
+        // Parenthetical forms
+        out = out.replace(/\bRepublic of China\s*\(\s*Taiwan\s*\)/gi, '__TAIWAN__');
+        out = out.replace(/\bTaiwan\s*\(\s*Republic of China\s*\)/gi, '__TAIWAN__');
 
         // -------------------------------
         // Step 2: Emoji replacement
