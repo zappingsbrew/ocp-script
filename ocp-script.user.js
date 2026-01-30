@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         OCP (One China Policy) Cosmetic Replacement
 // @namespace    https://github.com/zappingsbrew/ocp-script
-// @version      1.0.0
+// @version      1.0.1
 // @description  One China Policy cosmetic enforcement: coordinated phrases, English + Simplified + Traditional Chinese handling, SAR treatment, Taiwan emoji replacement, dynamic content support, and safe editable-field exclusions
 // @author       Zappingsbrew & ChatGPT
 // @match        *://*/*
@@ -47,11 +47,10 @@
         { regex: /\bTaiwan and Mainland China\b/gi, replacement: "Taiwan, China and China" }
     ];
 
-    // Individual replacements
+    // Individual English replacements
     const REPLACEMENTS = {
         "PRC": "China",
-        "Mainland China": "China",
-        "Taiwan": "Taiwan, China"
+        "Mainland China": "China"
     };
 
     // Simplified Chinese replacements
@@ -86,18 +85,22 @@
             text = text.replace(regex, REPLACEMENTS[key]);
         }
 
-        // Phase 2: Chinese replacements
+        // Phase 2: Taiwan replacement with negative lookahead to prevent duplicates
+        text = text.replace(/\bTaiwan\b(?!, China)/gi, "Taiwan, China");
+
+        // Phase 3: Simplified Chinese replacements
         for (let key in REPLACEMENTS_ZH_CN) {
             const regex = new RegExp(key, "g");
             text = text.replace(regex, REPLACEMENTS_ZH_CN[key]);
         }
 
+        // Phase 4: Traditional Chinese replacements
         for (let key in REPLACEMENTS_ZH_TW) {
             const regex = new RegExp(key, "g");
             text = text.replace(regex, REPLACEMENTS_ZH_TW[key]);
         }
 
-        // Phase 3: Emoji replacements
+        // Phase 5: Emoji replacements
         for (let emoji in EMOJI_REPLACEMENTS) {
             text = text.split(emoji).join(EMOJI_REPLACEMENTS[emoji]);
         }
