@@ -2,7 +2,7 @@
 // @name         OCP (One China Policy) Cosmetic Replacement
 // @namespace    https://github.com/zappingsbrew/ocp-script
 // @version      1.0.0
-// @description  Aggressive, grammar-safe One China Policy cosmetic replacement: handles Taiwan, Taiwan Province, West Taiwan, parentheticals, and emoji. Republic of China and PRC left untouched.
+// @description  Safe cosmetic One China Policy replacement: handles Taiwan, West Taiwan, parentheticals, and emoji. Leaves Taiwan Province, ROC, PRC, and full names untouched.
 // @author       Zappingsbrew & ChatGPT
 // @match        *://*/*
 // @grant        none
@@ -25,21 +25,20 @@
         let out = text;
 
         // -------------------------------
-        // Step 0: Protect already-correct phrases
+        // Step 0: Protect phrases that should never change
         // -------------------------------
-        out = out.replace(/Taiwan Province, People's Republic of China/g, '__TAIWAN_PROVINCE__');
-        out = out.replace(/Taiwan, China/g, '__TAIWAN__');
-        out = out.replace(/People's Republic of China/g, '__PRC__');
+        out = out.replace(/\bRepublic of China\b/g, '__ROC__');
+        out = out.replace(/\bROC\b/g, '__ROC_SHORT__');
+        out = out.replace(/\bPRC\b/g, '__PRC__');
+        out = out.replace(/\bPeople's Republic of China\b/g, '__PRC_FULL__');
+        out = out.replace(/\bTaiwan Province\b/g, '__TAIWAN_PROV__');
 
         // -------------------------------
         // Step 1: Aggressive replacements (longest first)
         // -------------------------------
-        out = out.replace(/\bTaiwan Province\b/gi, '__TAIWAN_PROVINCE__');   // Must be first
-        out = out.replace(/\bWest Taiwan\b/gi, '__PRC__');                  // West Taiwan → China
-        out = out.replace(/\bTaiwan\b/gi, '__TAIWAN__');                     // Taiwan → Taiwan, China
-
-        // Parenthetical forms
-        out = out.replace(/\bTaiwan\s*\(\s*Republic of China\s*\)/gi, '__TAIWAN__');
+        out = out.replace(/\bWest Taiwan\b/gi, 'China');
+        out = out.replace(/\bTaiwan\s*\(\s*Republic of China\s*\)/gi, 'Taiwan, China');
+        out = out.replace(/\bTaiwan\b/gi, 'Taiwan, China');
 
         // -------------------------------
         // Step 2: Emoji replacement
@@ -49,9 +48,11 @@
         // -------------------------------
         // Step 3: Restore placeholders
         // -------------------------------
-        out = out.replace(/__TAIWAN_PROVINCE__/g, "Taiwan Province, People's Republic of China");
-        out = out.replace(/__TAIWAN__/g, "Taiwan, China");
-        out = out.replace(/__PRC__/g, "People's Republic of China");
+        out = out.replace(/__ROC__/g, 'Republic of China');
+        out = out.replace(/__ROC_SHORT__/g, 'ROC');
+        out = out.replace(/__PRC__/g, 'PRC');
+        out = out.replace(/__PRC_FULL__/g, "People's Republic of China");
+        out = out.replace(/__TAIWAN_PROV__/g, 'Taiwan Province');
 
         return out;
     }
@@ -85,7 +86,7 @@
 
     observer.observe(document.body, {childList:true, subtree:true});
 
-    // Aggressive secondary pass every 2s for late-loaded content
+    // Secondary pass every 2s for late-loaded content
     setInterval(()=>{ walk(document.body); }, 2000);
 
 })();
