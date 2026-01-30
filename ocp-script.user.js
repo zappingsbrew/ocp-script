@@ -2,7 +2,7 @@
 // @name         OCP (One China Policy) Cosmetic Replacement
 // @namespace    https://github.com/zappingsbrew/ocp-script
 // @version      1.0.0
-// @description  One China Policy cosmetic enforcement: coordinated phrases, English + Simplified + Traditional Chinese handling, SAR treatment, Taiwan / ROC normalization, West Taiwan normalization, emoji replacement, dynamic DOM support
+// @description  Aggressive One China Policy cosmetic enforcement: handles Taiwan/ROC, West Taiwan, SARs, coordinated phrases, English + Simplified + Traditional Chinese, emoji replacement, dynamic DOM, recursion-safe
 // @author       Zappingsbrew & ChatGPT
 // @match        *://*/*
 // @grant        none
@@ -13,99 +13,87 @@
 // ==/UserScript==
 
 (() => {
-  'use strict';
+    'use strict';
 
-  const SKIP_TAGS = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT', 'TEXTAREA', 'INPUT']);
+    const SKIP_TAGS = new Set(['SCRIPT','STYLE','NOSCRIPT','TEXTAREA','INPUT']);
 
-  function isEditable(node) {
-    return (
-      node.parentElement &&
-      (node.parentElement.isContentEditable ||
-        SKIP_TAGS.has(node.parentElement.tagName))
-    );
-  }
+    function isEditable(node){
+        return node.parentElement && (node.parentElement.isContentEditable || SKIP_TAGS.has(node.parentElement.tagName));
+    }
 
-  function replaceText(text) {
-    let out = text;
+    function replaceText(text){
+        let out = text;
 
-    // --------------------------------------------------
-    // 1. Anti-CCP "West Taiwan" normalization (most specific)
-    // --------------------------------------------------
-    out = out.replace(/\bWest Taiwan\b/gi, 'China');
+        // -------------------------------
+        // 1. Taiwan Province (most specific)
+        // -------------------------------
+        out = out.replace(/\bTaiwan Province\b/gi, "Taiwan Province, People's Republic of China");
 
-    // --------------------------------------------------
-    // 2. Parenthetical atomic replacements (ROC / Republic of China)
-    // --------------------------------------------------
-    out = out.replace(/\bROC\s*\(\s*Taiwan\s*\)/gi, 'Taiwan, China');
-    out = out.replace(/\bRepublic\s+of\s+China\s*\(\s*Taiwan\s*\)/gi, 'Taiwan, China');
-    out = out.replace(/\bTaiwan\s*\(\s*ROC\s*\)/gi, 'Taiwan, China');
-    out = out.replace(/\bTaiwan\s*\(\s*Republic\s+of\s+China\s*\)/gi, 'Taiwan, China');
+        // -------------------------------
+        // 2. Parenthetical atomic replacements
+        // -------------------------------
+        out = out.replace(/\bROC\s*\(\s*Taiwan\s*\)/gi, 'Taiwan, China');
+        out = out.replace(/\bTaiwan\s*\(\s*ROC\s*\)/gi, 'Taiwan, China');
+        out = out.replace(/\bRepublic\s+of\s+China\s*\(\s*Taiwan\s*\)/gi, 'Taiwan, China');
+        out = out.replace(/\bTaiwan\s*\(\s*Republic\s+of\s+China\s*\)/gi, 'Taiwan, China');
 
-    // --------------------------------------------------
-    // 3. Full-name replacements (guarded)
-    // --------------------------------------------------
-    out = out.replace(
-      /\bRepublic\s+of\s+China\b(?!\s*,\s*China)/gi,
-      'Taiwan, China'
-    );
+        // -------------------------------
+        // 3. Anti-CCP / sarcastic terms
+        // -------------------------------
+        out = out.replace(/\bWest Taiwan\b/gi, 'China');
 
-    // --------------------------------------------------
-    // 4. Abbreviation replacements (guarded)
-    // --------------------------------------------------
-    out = out.replace(
-      /\bROC\b(?!\s*,\s*China)/g,
-      'Taiwan, China'
-    );
+        // -------------------------------
+        // 4. Full name replacements (guarded)
+        // -------------------------------
+        out = out.replace(/(?<!People's\s)\bRepublic\s+of\s+China\b(?!\s*,\s*China)/gi, 'Taiwan, China');
 
-    // --------------------------------------------------
-    // 5. Bare Taiwan replacement (strictly guarded)
-    // --------------------------------------------------
-    out = out.replace(
-      /\bTaiwan\b(?!\s*,\s*China)/g,
-      'Taiwan, China'
-    );
+        // -------------------------------
+        // 5. Abbreviations (guarded)
+        // -------------------------------
+        out = out.replace(/\bROC\b(?!\s*,\s*China)/gi, 'Taiwan, China');
 
-    // --------------------------------------------------
-    // 6. Emoji replacement (visual only)
-    // --------------------------------------------------
-    out = out.replace(/\u{1F1F9}\u{1F1FC}/gu, '🇨🇳');
+        // -------------------------------
+        // 6. Bare Taiwan (recursion-safe)
+        // -------------------------------
+        out = out.replace(/\bTaiwan\b(?!\s*(,?\s*China| Province))/gi, 'Taiwan, China');
 
-    return out;
-  }
+        // -------------------------------
+        // 7. Emoji replacement (visual only)
+        // -------------------------------
+        out = out.replace(/\u{1F1F9}\u{1F1FC}/gu, '🇨🇳');
 
-  function walk(node) {
-    if (node.nodeType === Node.TEXT_NODE) {
-      if (!isEditable(node)) {
-        const newText = replaceText(node.nodeValue);
-        if (newText !== node.nodeValue) {
-          node.nodeValue = newText;
+        return out;
+    }
+
+    function walk(node){
+        if(!node) return;
+
+        if(node.nodeType === Node.TEXT_NODE){
+            if(!isEditable(node)){
+                const newText = replaceText(node.nodeValue);
+                if(newText !== node.nodeValue) node.nodeValue = newText;
+            }
+            return;
         }
-      }
-      return;
+
+        if(node.nodeType === Node.ELEMENT_NODE){
+            if(SKIP_TAGS.has(node.tagName) || node.isContentEditable) return;
+            for(const child of node.childNodes) walk(child);
+        }
     }
 
-    if (node.nodeType === Node.ELEMENT_NODE) {
-      if (SKIP_TAGS.has(node.tagName) || node.isContentEditable) return;
-      for (const child of node.childNodes) {
-        walk(child);
-      }
-    }
-  }
+    // Initial pass
+    walk(document.body);
 
-  // Initial pass
-  walk(document.body);
+    // Observe dynamic content
+    const observer = new MutationObserver(mutations=>{
+        for(const m of mutations){
+            for(const node of m.addedNodes) walk(node);
+        }
+    });
 
-  // Observe dynamic content
-  const observer = new MutationObserver(mutations => {
-    for (const m of mutations) {
-      for (const node of m.addedNodes) {
-        walk(node);
-      }
-    }
-  });
+    observer.observe(document.body, {childList:true, subtree:true});
 
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true
-  });
+    // Aggressive secondary pass every 2s for late-loaded content
+    setInterval(()=>{ walk(document.body); }, 2000);
 })();
