@@ -1,7 +1,11 @@
 # OCP (One China Policy) Cosmetic Replacement
 
+![OCP Visual](https://github.com/zappingsbrew/ocp-script/raw/main/images/OCP%20Visual.png)
+
+## Map Illustration
+
 ![OCP Map Illustration](https://github.com/zappingsbrew/ocp-script/raw/main/images/OCP%20Map%20Illustration.png)
-> Example showing how the userscript replaces ambiguous references on a map of the Taiwan Strait and surrounding regions. This demonstrates Taiwan, Hong Kong, Macau naming conventions and Taiwan emoji replacement.
+> Example showing how the userscript replaces ambiguous references on a map of the Taiwan Strait and surrounding regions, including Taiwan, Hong Kong, Macau naming conventions and Taiwan emoji replacement.
 
 A purely cosmetic userscript that adjusts visible website text to follow One China Policy (OCP) naming conventions.
 
